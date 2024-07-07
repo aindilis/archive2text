@@ -48,3 +48,24 @@
    ((string= archive2text-export-method "gptel") (progn (ffap output-file) (end-of-buffer)))
    ((string= archive2text-export-method "llm-api") (kmax-not-yet-implemented))
    )))
+
+(defun kmax-directory-exists-p (file)
+ (interactive)
+ (file-directory-p file))
+
+(defun kmax-file-exists-p (file)
+ ""
+ (interactive)
+ (file-exists-p file))
+
+(defun kmax-file-type (argument-arg)
+ ""
+ (interactive)
+ (let* ((output1 (shell-command-to-string (concat "file " (shell-quote-argument argument-arg))))
+	(output2 (chomp output1))
+	(output3 (kmax-extract-match "^.*?: \\(.*\\)$" output2 1)))
+  (see output3)))
+
+(defun kmax-extract-match (regex string &optional n)
+ (string-match regex string)
+ (match-string (or n 0) string))
