@@ -69,3 +69,18 @@
 (defun kmax-extract-match (regex string &optional n)
  (string-match regex string)
  (match-string (or n 0) string))
+
+(defun chomp (str)
+ ;; from http://www.emacswiki.org/emacs/ElispCookbook                                                                                                                                                                                                                                                                                                                                                                                     
+ "..."
+ (let ((s (if (symbolp str)(symbol-name str) str)))
+  (save-excursion
+   (while (and
+           (not (null (string-match "^\\( \\|\f\\|\t\\|\n\\)" s)))
+           (> (length s) (string-match "^\\( \\|\f\\|\t\\|\n\\)" s)))
+    (setq s (replace-match "" t nil s)))
+   (while (and
+           (not (null (string-match "\\( \\|\f\\|\t\\|\n\\)$" s)))
+           (> (length s) (string-match "\\( \\|\f\\|\t\\|\n\\)$" s)))
+    (setq s (replace-match "" t nil s))))
+  s))
