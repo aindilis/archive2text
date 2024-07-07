@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+
+# use lib '/var/lib/myfrdcsa/codebases/minor/archive2text';
+
+# be sure to add the ability to filter out nontext data like binary
+# data, etc.
+
+use strict;
+use warnings;
+
+use BOSS::Config;
+use PerlLib::SwissArmyKnife;
+use Archive2Text qw(to_text from_text);
+
+my $specification = q(
+	--direction <direction>			Either 'archive2text' or 'text2archive'. Default is archive2text.
+
+	--archive-or-dir <entity>		Directory or archive to use
+	--type <type>				Either 'directory', 'archive', or a specific type of archive: e.g. tar, gzip, zip, etc.
+
+	--text <file>				Text file to use
+
+	--use-redaction <truthvalue>		Enable redaction. When direction is archive2text, the default value is `true`. When direction is text2archive, the default value is 'false'.
+);
+
+my $config =
+  BOSS::Config->new
+  (Spec => $specification);
+my $conf = $config->CLIConfig;
+# $UNIVERSAL::systemdir = "/var/lib/myfrdcsa/codebases/minor/system";
+
+my $direction = 'archive2text';
+if (defined $conf->{'--direction'}) {
+  if ($conf->{'--direction'} =~ /(archive2text|text2archive)/) {
+    $direction = $conf->{'--direction'};
+  } else {
+    die "Need to specify a proper direction\n";
+  }
+}
+
+my $redactor_function;
+$redactor_function = sub {
+  my ($filename, $content) = @_;
+  # FIXME: fill in with calls to our redaction system, such as
+  # video-redactor project uses
+  $content =~ s/password: \S+/password: [REDACTED]/g;
+  return $content;
+};
+
+if (defined $conf->{'--use-redaction'} and $conf->{'--use-redaction'} eq 'true') {
+  $redactor_function = sub {
+    my ($filename, $content) = @_;
+    # FIXME: fill in with calls to our redaction system, such as
+    # video-redactor project uses
+    $content =~ s/password: \S+/password: [REDACTED]/g;
+    return $content;
+  };
+}
+if (defined $conf->{'--use-redaction'} and $conf->{'--use-redaction'} eq 'false') {
+  $redactor_function = sub {
+    my ($filename, $content) = @_;
+    return $content;
+  }
+}
+
+my $input;
+my $output;
+if ($direction eq 'archive2text') {
+  $input = $conf->{'--archive-or-dir'};
+  $output = $conf->{'--text'};
+  to_text($input, $output, $redactor_function, $conf->{'--type'});
+} elsif ($direction eq 'text2archive') {
+  $input = $conf->{'--text'};
+  $output = $conf->{'--archive-or-dir'};
+  from_text($input, $output, $redactor_function, $conf->{'--type'});
+}
